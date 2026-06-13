@@ -4,7 +4,8 @@ function sum(a, b) {
   return a + b;
 }
 
-const BACKEND_URL = "http://localhost:3000"
+const BACKEND_URL = "http://localhost:3000";
+const WS_URL = "ws://localhost:3001";
 
 describe("Authentication", () => {
     test('User is able to sign up only once', async () => {
@@ -82,7 +83,7 @@ describe("User informatino endpoints", () => {
     let token = "";
     let avatarId = "";
     
-    beforeALl(async () => {
+    beforeAll(async () => {
         const username = `amnkarn-${Math.random()}`;
         const password = "123456";
 
@@ -150,7 +151,7 @@ describe("User avatar information", () => {
     let token = "";
     let userId = "";
 
-    beforeALl(async () => {
+    beforeAll(async () => {
         const username = `amnkarn-${Math.random()}`;
         const password = "123456";
 
@@ -208,7 +209,7 @@ describe("Space information", () => {
     let userToken;
     let userId;
 
-    beforeALl(async () => {
+    beforeAll(async () => {
         const username = `amnkarn-${Math.random()}`;
         const password = "123456";
 
@@ -430,7 +431,7 @@ describe("Arena endpoint", () => {
     let userId;
     let spaceId;
 
-    beforeALl(async () => {
+    beforeAll(async () => {
         const username = `amnkarn-${Math.random()}`;
         const password = "123456";
 
@@ -598,7 +599,7 @@ describe("Admin endpoints", () => {
     let userToken;
     let userId;
 
-    beforeALl(async () => {
+    beforeAll(async () => {
         const username = `amnkarn-${Math.random()}`;
         const password = "123456";
 
@@ -754,5 +755,176 @@ describe("Admin endpoints", () => {
 })
 
 describe("Websockets test", () => {
-    
+    let adminId;
+    let adminToken;
+    let userId;
+    let userToken;
+    let mapId;
+    let elementId1;
+    let elementId2;
+    let spaceId;
+    let ws1;
+    let ws2;
+    let ws1Messages = [];
+    let ws2Messages = [];
+
+    function waitForAndPopLatestMessage(messageArray) {
+        return new Promise(r => {
+            if(messageArray.length > 0) {
+                resolve(messageArray.shift());
+            } else {
+                let interval = setInterval(() => {
+                    if(messageArray.length > 0) {
+                        resolve(messageArray.shift());
+                        clearInterval(interval);
+                    }
+                }, 100)
+            }
+        })
+    }
+
+    function HTTPSetup() {
+        const username = `amnkarn-${Math.random()}`;
+        const password = "1234";
+
+        //admin signup & signin
+        const adminSignupResponse = await axios.post(`${BACKEND_URL}/api/v1/signup`, {
+            username,
+            password,
+            role: "admin"
+        })
+
+        const adminSigninResponse = await axios.post(`${BACKEND_URL}/api/v1/signin`, {
+            username,
+            password,
+        })
+
+        adminId = adminSignupResponse.data.id;
+        adminToken = adminSigninResponse.data.token;
+
+        //user signup & signin
+        const userSignupResponse = await axios.post(`${BACKEND_URL}/api/v1/signup`, {
+            username: username + '-user',
+            password,
+            role: "user"
+        })
+
+        const userSigninResponse = await axios.post(`${BACKEND_URL}/api/v1/signin`, {
+            username: username + '-user',
+            password,
+        })
+
+        userId = userSignupResponse.data.id;
+        userToken = userSigninResponse.data.token;
+
+        //creat element & map
+        const element1Response = await axios.post(`${BACKEND_URL}/api/v1/admin/element`, {
+            imageUrl: "https://encrypted-tbn0.gstatic.com/shopping?q=tbn:ANd9GcRCRca3wAR4zjPPTzeIY9rSwbbqB6bB2hVkoTXN4eerXOIkJTG1GpZ9ZqSGYafQPToWy_JTcmV5RHXsAsWQC3tKnMlH_CsibsSZ5oJtbakq&usqp=CAE",
+            width: 1,
+            height: 1,
+            static: true
+        }, {
+            headers: {
+                "Authorization": `Bearer ${adminToken}`
+            }
+        })
+
+        const element2Response = await axios.post(`${BACKEND_URL}/api/v1/admin/element`, {
+            imageUrl: "https://encrypted-tbn0.gstatic.com/shopping?q=tbn:ANd9GcRCRca3wAR4zjPPTzeIY9rSwbbqB6bB2hVkoTXN4eerXOIkJTG1GpZ9ZqSGYafQPToWy_JTcmV5RHXsAsWQC3tKnMlH_CsibsSZ5oJtbakq&usqp=CAE",
+            width: 1,
+            height: 1,
+            static: true
+        }, {
+            headers: {
+                "Authorization": `Bearer ${adminToken}`
+            }
+        })
+
+        elementId1 = element1Response.data.id;
+        elementId2 = element2Response.data.id;
+
+        const mapResponse = await axios.post(`${BACKEND_URL}/api/v1/admin/map`, {
+            thumbnail: "https://thumbnail.com/a.png",
+            dimensions: "100x200",
+            name: "100 person interview room",
+            defaultElements: [{
+                    elementId: elementId1,
+                    x: 20,
+                    y: 20
+                }, {
+                    elementId: elementId1,
+                    x: 18,
+                    y: 20
+                }, {
+                    elementId: elementId2,
+                    x: 19,
+                    y: 20
+                }
+            ]
+        }, {
+            headers: {
+                "Authorization": `Bearer ${adminToken}`
+            }
+        })
+
+        mapId = mapResponse.id;
+
+        const space = await axios.post(`${BACKEND_URL}/api/v1/space`, {
+            name: "Test",
+            dimensions: "100x200",
+            mapId: mapId
+        }, {
+            headers: {
+                "Authorization": `Bearer ${userToken}`
+            }
+        })
+
+        spaceId = space.spaceId;
+    }
+
+    async function WSSetup() {
+        ws1 = await new WebSocket(WS_URL);
+        ws2 = await new WebSocket(WS_URL);
+
+        await new Promise ((r) => {
+            ws1.onopen = r
+        })
+
+        await new Promise ((r) => {
+            ws2.onopen = r
+        })
+
+        ws1.onmessage = (event) => {
+            ws1Messages.push(JSON.parse(event.data));
+        }
+        
+        ws2.onmessage = (event) => {
+            ws2Messages.push(JSON.parse(event.data));
+        }
+
+        ws1.send(JSON.stringify({
+            "type": "join",
+            "payload": {
+                "spaceId": spaceId,
+                "token": adminToken
+            }
+        }))
+
+        ws2.send(JSON.stringify({
+            "type": "join",
+            "payload": {
+                "spaceId": spaceId,
+                "token": userToken
+            }
+        }))
+    }
+
+    beforeAll( async () => {
+        HTTPSetup();
+        WSSetup();
+    })
+
+    test("Gey back for joining the space", () => {
+        
+    })
 })
