@@ -267,10 +267,10 @@ describe("Space information", () => {
             }
         })
 
-        elementId1 = element1.id;
-        elementId2 = element2.id;
+        elementId1 = element1.data.id;
+        elementId2 = element2.data.id;
 
-        const map = await axios.post(`${BACKEND_URL}/api/v1/admin/map`, {
+        const mapResponse = await axios.post(`${BACKEND_URL}/api/v1/admin/map`, {
             thumbnail: "https://thumbnail.com/a.png",
             dimensions: "100x200",
             name: "100 person interview room",
@@ -294,7 +294,7 @@ describe("Space information", () => {
             }
         })
 
-        mapId = map.id;
+        mapId = mapResponse.id;
     })
 
     test("User is able to create space", async () => {
@@ -309,7 +309,7 @@ describe("Space information", () => {
         })
 
         expect(space.statusCode).toBe(200);
-        expect(space.spaceId).toBeDefined();
+        expect(space.data.spaceId).toBeDefined();
     })
 
     test("User is able to create space without map id(empty space)", async () => {
@@ -322,7 +322,7 @@ describe("Space information", () => {
             }
         })
 
-        expect(space.spaceId).toBeDefined();
+        expect(space.data.spaceId).toBeDefined();
     })
 
     test("User is not able to create space without mapId and dimension", async () => {
@@ -467,7 +467,7 @@ describe("Arena endpoint", () => {
         userToken = response.data.token;
 
         //creat element & map
-        const element1 = await axios.post(`${BACKEND_URL}/api/v1/admin/element`, {
+        const element1Response = await axios.post(`${BACKEND_URL}/api/v1/admin/element`, {
             imageUrl: "https://encrypted-tbn0.gstatic.com/shopping?q=tbn:ANd9GcRCRca3wAR4zjPPTzeIY9rSwbbqB6bB2hVkoTXN4eerXOIkJTG1GpZ9ZqSGYafQPToWy_JTcmV5RHXsAsWQC3tKnMlH_CsibsSZ5oJtbakq&usqp=CAE",
             width: 1,
             height: 1,
@@ -478,7 +478,7 @@ describe("Arena endpoint", () => {
             }
         })
 
-        const element2 = await axios.post(`${BACKEND_URL}/api/v1/admin/element`, {
+        const element2Response = await axios.post(`${BACKEND_URL}/api/v1/admin/element`, {
             imageUrl: "https://encrypted-tbn0.gstatic.com/shopping?q=tbn:ANd9GcRCRca3wAR4zjPPTzeIY9rSwbbqB6bB2hVkoTXN4eerXOIkJTG1GpZ9ZqSGYafQPToWy_JTcmV5RHXsAsWQC3tKnMlH_CsibsSZ5oJtbakq&usqp=CAE",
             width: 1,
             height: 1,
@@ -489,10 +489,10 @@ describe("Arena endpoint", () => {
             }
         })
 
-        elementId1 = element1.id;
-        elementId2 = element2.id;
+        elementId1 = element1Response.data.id;
+        elementId2 = element2Response.data.id;
 
-        const map = await axios.post(`${BACKEND_URL}/api/v1/admin/map`, {
+        const mapResponse = await axios.post(`${BACKEND_URL}/api/v1/admin/map`, {
             thumbnail: "https://thumbnail.com/a.png",
             dimensions: "100x200",
             name: "100 person interview room",
@@ -516,7 +516,7 @@ describe("Arena endpoint", () => {
             }
         })
 
-        mapId = map.id;
+        mapId = mapResponse.id;
 
         const space = await axios.post(`${BACKEND_URL}/api/v1/space`, {
             name: "Test",
@@ -590,4 +590,169 @@ describe("Arena endpoint", () => {
 
         expect(response.statusCode).toBe(400)
     })
+})
+
+describe("Admin endpoints", () => {
+    let adminToken = "";
+    let adminId = "";
+    let userToken;
+    let userId;
+
+    beforeALl(async () => {
+        const username = `amnkarn-${Math.random()}`;
+        const password = "123456";
+
+        //admin signup & signin
+        const signupResponse = await axios.post(`${BACKEND_URL}/api/v1/signup`, {
+            username,
+            password,
+            type: "admin"
+        })
+
+        adminId = signupResponse.data.userId;
+
+        const response = await axios.post(`${BACKEND_URL}/api/v1/signin`, {
+            username,
+            password
+        })
+
+        adminToken = response.data.token;
+
+        //user signup and signin
+        const userSignup = await axios.post(`${BACKEND_URL}/api/v1/signup`, {
+            username: username + "-user",
+            password,
+            type: "user"
+        })
+
+        userId = userSignup.data.userId;
+
+        const userSignin = await axios.post(`${BACKEND_URL}/api/v1/signin`, {
+            username: username + "-user",
+            password
+        })
+
+        userToken = response.data.token;
+    })
+
+    test("User is not able to hit admin Endpoints", async () => {
+        const elementResponse = await axios.post(`${BACKEND_URL}/api/v1/admin/element`, {
+            imageUrl: "https://encrypted-tbn0.gstatic.com/shopping?q=tbn:ANd9GcRCRca3wAR4zjPPTzeIY9rSwbbqB6bB2hVkoTXN4eerXOIkJTG1GpZ9ZqSGYafQPToWy_JTcmV5RHXsAsWQC3tKnMlH_CsibsSZ5oJtbakq&usqp=CAE",
+            width: 1,
+            height: 1,
+            static: true
+        }, {
+            headers: {
+                "Authorization": `Bearer ${userToken}`
+            }
+        })
+
+        const mapResponse = await axios.post(`${BACKEND_URL}/api/v1/admin/map`, {
+            thumbnail: "https://thumbnail.com/a.png",
+            dimensions: "100x200",
+            name: "100 person interview room",
+            defaultElements: [],
+        }, {
+            headers: {
+                "Authorization": `Bearer ${userToken}`
+            }
+        })
+      
+        const avatarResponse = await axios.post(`${BACKEND_URL}/api/v1/admin/avatar`, {
+            imageUrl: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQm3RFDZM21teuCMFYx_AROjt-AzUwDBROFww&s",
+            name: "Timmy"
+        }, {
+            headers: {
+                "Authorization": `Bearer ${userToken}`
+            }
+        })
+
+        const updateElementRequest = await axios.post(`${BACKEND_URL}/api/v1/admin/element/123`, {
+            imageUrl: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQm3RFDZM21teuCMFYx_AROjt-AzUwDBROFww&s",
+        }, {
+            headers: {
+                "Authorization": `Bearer ${userToken}`
+            }
+        })
+
+        expect(elementResponse.statusCode).toBe(403);
+        expect(mapResponse.statusCode).toBe(403);
+        expect(avatarResponse.statusCode).toBe(403);
+        expect(updateElementRequest.statusCode).toBe(403);
+    })
+
+    test("User is able to hit admin Endpoints", async () => {
+        const elementResponse = await axios.post(`${BACKEND_URL}/api/v1/admin/element`, {
+            imageUrl: "https://encrypted-tbn0.gstatic.com/shopping?q=tbn:ANd9GcRCRca3wAR4zjPPTzeIY9rSwbbqB6bB2hVkoTXN4eerXOIkJTG1GpZ9ZqSGYafQPToWy_JTcmV5RHXsAsWQC3tKnMlH_CsibsSZ5oJtbakq&usqp=CAE",
+            width: 1,
+            height: 1,
+            static: true
+        }, {
+            headers: {
+                "Authorization": `Bearer ${adminToken}`
+            }
+        })
+
+        const mapResponse = await axios.post(`${BACKEND_URL}/api/v1/admin/map`, {
+            thumbnail: "https://thumbnail.com/a.png",
+            dimensions: "100x200",
+            name: "100 person interview room",
+            defaultElements: [],
+        }, {
+            headers: {
+                "Authorization": `Bearer ${adminToken}`
+            }
+        })
+      
+        const avatarResponse = await axios.post(`${BACKEND_URL}/api/v1/admin/avatar`, {
+            imageUrl: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQm3RFDZM21teuCMFYx_AROjt-AzUwDBROFww&s",
+            name: "Timmy"
+        }, {
+            headers: {
+                "Authorization": `Bearer ${adminToken}`
+            }
+        })
+
+        const updateElementRequest = await axios.post(`${BACKEND_URL}/api/v1/admin/element/123`, {
+            imageUrl: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQm3RFDZM21teuCMFYx_AROjt-AzUwDBROFww&s",
+        }, {
+            headers: {
+                "Authorization": `Bearer ${adminToken}`
+            }
+        })
+
+        expect(elementResponse.statusCode).toBe(200);
+        expect(mapResponse.statusCode).toBe(200);
+        expect(avatarResponse.statusCode).toBe(200);
+        expect(updateElementRequest.statusCode).toBe(200);
+    })
+
+    test("Admin is able to update the imageUrl for an element", async () => {
+        const elementResponse = await axios.put(`${BACKEND_URL}/api/v1/admin/element`, {
+            imageUrl: "https://encrypted-tbn0.gstatic.com/shopping?q=tbn:ANd9GcRCRca3wAR4zjPPTzeIY9rSwbbqB6bB2hVkoTXN4eerXOIkJTG1GpZ9ZqSGYafQPToWy_JTcmV5RHXsAsWQC3tKnMlH_CsibsSZ5oJtbakq&usqp=CAE",
+            width: 1,
+            height: 1,
+            static: true
+        }, {
+            headers: {
+                "Authorization": `Bearer ${adminToken}`
+            }
+        })
+
+        const elementId = elementResponse.data.id;
+
+        const updateElementResponse = await axios.put(`${BACKEND_URL}/api/v1/admin/element/${elementId}`, {
+            imageUrl: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQm3RFDZM21teuCMFYx_AROjt-AzUwDBROFww&s"
+        }, {
+            headers: {
+                "Authorization": `Bearer ${adminToken}`
+            }
+        })
+
+        expect(updateElementResponse.statusCode).toBe(200);
+    })
+})
+
+describe("Websockets test", () => {
+    
 })
