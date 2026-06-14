@@ -3,6 +3,7 @@ import { SigninSchema, SignupSchema } from "../validators/index.js";
 import axios from "axios";
 import bcrypt from "bcrypt";
 import { prismaClient } from "@repo/db/client";
+import generateToken from "../utils/generateToken.js";
 
 export async function signup(req: Request, res: Response) {
     const parsedData = SignupSchema.safeParse(req.body);
@@ -28,7 +29,7 @@ export async function signup(req: Request, res: Response) {
 
         const salt = await bcrypt.genSalt(5);
         const hashedPassword = await bcrypt.hash(password, salt);
-        
+
         const user = await prismaClient.user.create({
             data: {
                 username,
@@ -43,12 +44,54 @@ export async function signup(req: Request, res: Response) {
         
     } catch (error) {
         console.log("Error in signup controller: ", error);
-        return res.json({
+        return res.status(400).json({
             "message": "Something went wrong in signup"
         })
     }
 }
 
-export function signin() {
-    
+export async function signin(req: Request, res: Response) {
+    const parsedData = SigninSchema.safeParse(req.body);
+    if(!parsedData.success) {
+        return res.status(400).json({
+            "message": "Error in validation"
+        })
+    }
+
+    try {
+        const {username, password} = parsedData.data;
+
+        const user = await prismaClient.user.findUnique({
+            where: {
+                username
+            }
+        })
+
+        if(!user) {
+            return res.status(404).json({
+                message: "User is not registered"
+            })
+        }
+
+        const isCorrect = await bcrypt.compare(password, user.password);
+
+        if(!isCorrect) {
+            return res.status(401).json({
+                message: "Password is not correct"
+            })
+        }
+
+        //generate token
+        const token = generateToken(user.id, user.role);
+
+        return res.status(200).json({
+            token,
+        })
+
+    } catch (error) {
+        console.log("Error in signin controller: ", error);
+        res.status(403).json({
+            message: "Something went wrong in signin"
+        })
+    }
 }
