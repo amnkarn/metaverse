@@ -4,14 +4,13 @@ import { config } from "dotenv";
 import path from "path";
 import { fileURLToPath } from "url";
 
-// Load environment variables from root .env file
+// Load environment variables from .env file
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
-//const envPath = path.resolve(__dirname, "../../../.env"); //root level .env file
 const envPath = path.resolve(__dirname, "../.env"); //package level .env file
 config({ path: envPath });
 
 const connectionString = process.env.DATABASE_URL;
-if(!connectionString || connectionString === "undefined") {
+if (!connectionString || connectionString === "undefined") {
     throw new Error("connection string is required");
 }
 

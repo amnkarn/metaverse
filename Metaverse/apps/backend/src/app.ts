@@ -12,6 +12,7 @@ app.get("/test", async (req, res) => {
     })
 
     console.log("user created");
+    console.log(user);
     res.status(201).json(user);
 })
 
