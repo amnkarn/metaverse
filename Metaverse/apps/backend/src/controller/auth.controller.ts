@@ -1,0 +1,54 @@
+import { Request, Response } from "express";
+import { SigninSchema, SignupSchema } from "../validators/index.js";
+import axios from "axios";
+import bcrypt from "bcrypt";
+import { prismaClient } from "@repo/db/client";
+
+export async function signup(req: Request, res: Response) {
+    const parsedData = SignupSchema.safeParse(req.body);
+    if(!parsedData.success) {
+        return res.status(400).json({
+            message: "Validation failed"
+        })
+    }
+
+    try {
+        const { username, password, type } = parsedData.data;
+        
+        const isAlreadyRegistered = await prismaClient.user.findUnique({
+            where: {
+                username
+            }
+        })
+        if(isAlreadyRegistered) {
+            return res.status(400).json({
+                message: "User is already registered"
+            })
+        }
+
+        const salt = await bcrypt.genSalt(5);
+        const hashedPassword = await bcrypt.hash(password, salt);
+        
+        const user = await prismaClient.user.create({
+            data: {
+                username,
+                password: hashedPassword,
+                role: type === "user" ? "User" : "Admin"
+            }
+        })
+
+        return res.status(201).json({
+            "userId": user.id
+        })
+        
+    } catch (error) {
+        console.log("Error in signup controller: ", error);
+        return res.json({
+            "message": "Something went wrong in signup"
+        })
+    }
+}
+
+export function signin() {
+    
+}

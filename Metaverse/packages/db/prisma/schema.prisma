@@ -8,8 +8,74 @@ datasource db {
 }
 
 model User {
-  id       String  @id @unique @default(cuid())
-  username String  @unique
-  password String
-  avatarId String?
+  id            String  @id @unique @default(uuid())
+  username      String  @unique
+  password      String
+  role          Role    @default(User)
+  spaces        Space[]
+  avatarId      String?
+  avatar        Avatar?  @relation(fields: [avatarId], references: [id])
+}
+
+enum Role {
+  Admin
+  User
+}
+
+model Space {
+  id            String  @id @unique @default(uuid())
+  name          String
+  width         Int
+  height        Int
+  thumbnnail    String?
+  createrId     String
+  creater       User    @relation(fields: [createrId], references: [id])
+  elements      SpaceElement[]
+}
+
+model Avatar {
+  id            String  @id  @unique @default(uuid())
+  imageUrl      String?
+  name          String?
+  users         User[]
+}
+
+model SpaceElement {
+  id            String  @id  @unique @default(uuid())
+  elementId     String
+  element       Element @relation(fields: [elementId], references: [id])
+  x             Int
+  y             Int
+  spaceId       String
+  space         Space   @relation(fields: [spaceId], references: [id])
+}
+
+model Element {
+  id            String  @id @unique @default(uuid())
+  width         Int
+  height        Int
+  static        Boolean
+  imageUrl      String
+
+  spaces        SpaceElement[]
+  mapElements   MapElements[]
+}
+
+model Map {
+  id            String  @id @unique @default(uuid())
+  width         Int
+  height        Int
+  name          String
+  thumbnail     String
+  mapElements   MapElements[]
+}
+
+model MapElements {
+  id          String  @id @unique @default(uuid())
+  elementsId  String
+  elements    Element @relation(fields: [elementsId], references: [id])
+  x           Int?
+  y           Int?
+  mapId       String
+  map         Map     @relation(fields: [mapId], references: [id])
 }

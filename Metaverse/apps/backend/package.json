@@ -14,9 +14,17 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
-    "@types/express": "^5.0.6",
-    "express": "^5.2.1",
+    "@repo/db": "workspace:*",
     "@repo/typescript-config": "workspace:*",
-    "@repo/db": "workspace:*"
+    "@types/bcrypt": "^6.0.0",
+    "@types/cors": "^2.8.19",
+    "@types/express": "^5.0.6",
+    "@types/morgan": "^1.9.10",
+    "axios": "^1.17.0",
+    "bcrypt": "^6.0.0",
+    "cors": "^2.8.6",
+    "express": "^5.2.1",
+    "morgan": "^1.11.0",
+    "zod": "^4.4.3"
   }
 }
