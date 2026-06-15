@@ -1,31 +1,27 @@
 import { Router } from "express";
-import { CreateSpaceSchema } from "../validators/index.js";
 import { isUser } from "../middleware/isUser.js";
-import { createSpace } from "../controller/space.controller.js";
+import { allSpaces, createSpace, deleteSpace } from "../controller/space.controller.js";
 
 
 const spaceRouter: Router = Router();
 
 spaceRouter.post("/", isUser, createSpace)
 
-spaceRouter.delete("/element", () => {
+spaceRouter.delete("/:spaceId", isUser, deleteSpace)
 
-})
-
-spaceRouter.delete("/:spaceId", () => {
+spaceRouter.get("/:spaceId", () => {
     
 })
 
-spaceRouter.get("/all", () => {
-
-})
+spaceRouter.get("/all", isUser, allSpaces)
 
 spaceRouter.post("/element", () => {
 
 })
 
-spaceRouter.get("/:spaceId", () => {
-    
+spaceRouter.delete("/element", () => {
+
 })
+
 
 export default spaceRouter;
