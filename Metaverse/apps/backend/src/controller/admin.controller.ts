@@ -32,30 +32,3 @@ export const createElement = async (req: Request, res: Response) => {
 
     const userId = (req as any).userId;
 }
-
-export const updateElement = async (req: Request, res: Response) => {
-    const parsedData = UpdateElementSchema.safeParse(req.body);
-    if(!parsedData.success) {
-        return res.status(400).json({
-            message: "Validation error"
-        })
-    }
-
-    try {
-        const element = await prismaClient.element.findUnique({
-            where: {
-                id: req.params.elementId as string
-            }
-        })
-
-        if(!element) {
-            return res.status(400).json({ message: "Invalid element id" })
-        }
-
-        //if(element)
-
-    } catch (error) {
-        console.log("Error in updateElement controller: ", error);
-        res.status(500).json("Sommething went wrong");
-    }
-}
