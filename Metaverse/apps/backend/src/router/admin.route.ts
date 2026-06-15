@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { createElement, updateElement } from "../controller/admin.controller.js";
+import { createAvatar, createElement, createMap, updateElement } from "../controller/admin.controller.js";
 import { isAdmin } from "../middleware/isAdmin.js";
 
 
@@ -7,15 +7,11 @@ const adminRouter: Router = Router();
 
 adminRouter.post("/element", isAdmin, createElement)
 
-adminRouter.put("/element/:elementId", updateElement)
+adminRouter.put("/element/:elementId", isAdmin, updateElement)
 
-adminRouter.post("/avatar", () => {
+adminRouter.post("/avatar", isAdmin, createAvatar)
 
-})
-
-adminRouter.post("/map", () => {
-
-})
+adminRouter.post("/map", isAdmin, createMap)
 
 
 
