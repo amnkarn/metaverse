@@ -193,7 +193,7 @@ export const allSpaces = async (req: Request, res: Response) => {
     }
 }
 
-export const createElement = async (req: Request, res: Response) => {
+export const createSpaceElement = async (req: Request, res: Response) => {
     const parsedData = AddElementSchema.safeParse(req.body);
     if(!parsedData.success) {
         return res.status(400).json({

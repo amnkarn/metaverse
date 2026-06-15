@@ -2,8 +2,8 @@ import { Router } from "express";
 import { isUser } from "../middleware/isUser.js";
 import { 
     allSpaces, 
-    createElement, 
     createSpace, 
+    createSpaceElement, 
     deleteElement, 
     deleteSpace, 
     findSpace
@@ -20,7 +20,7 @@ spaceRouter.get("/:spaceId", isUser, findSpace)
 
 spaceRouter.get("/all", isUser, allSpaces)
 
-spaceRouter.post("/element", isUser, createElement)
+spaceRouter.post("/element", isUser, createSpaceElement)
 
 spaceRouter.delete("/element", isUser, deleteElement)
 

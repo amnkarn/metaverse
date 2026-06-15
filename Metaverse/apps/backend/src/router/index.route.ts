@@ -19,6 +19,6 @@ indexRouter.use("/user", userRouter);
 
 indexRouter.use("/space", spaceRouter);
 
-//indexRouter.use("/admin", adminRouter);
+indexRouter.use("/admin", adminRouter);
 
 export default indexRouter;
