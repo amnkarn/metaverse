@@ -1,5 +1,5 @@
 import { Request, Response } from "express";
-import { CreateSpaceSchema } from "../validators/index.js";
+import { AddElementSchema, CreateSpaceSchema, DeleteElementSchema } from "../validators/index.js";
 import { prismaClient } from "@repo/db/client";
 
 
@@ -120,6 +120,55 @@ export const deleteSpace = async (req: Request, res: Response) => {
     }
 }
 
+export const findSpace = async (req: Request, res: Response) => {
+    const spaceId = req.params.spaceId as string;
+    if(!spaceId) {
+        return res.status(400).json({
+            message: "spaceId is missing"
+        })
+    }
+
+    try {
+        const space = await prismaClient.space.findUnique({
+            where: {
+                id: spaceId,
+            }, include: {
+                elements: {
+                    include: {
+                        element: true
+                    }
+                }
+            }
+        })
+
+        if(space?.createrId !== (req as any).userId) {
+            return res.status(403).json({
+                message: "Unauthorised"
+            })
+        }
+
+        return res.status(200).json({
+            dimension: `${space?.height}x${space?.width}`,
+            elements: space?.elements.map(e => ({
+                id: e.id,
+                element: {
+                    id: e.element.id,
+                    imageUrl: e.element.imageUrl,
+                    height: e.element.height,
+                    width: e.element.width,
+                    static: e.element.static,
+                },
+                x: e.x,
+                y: e.y,
+            }))
+        })
+
+    } catch (error) {
+        console.log("Error in findSpace controller: ", error);
+        res.status(500).json("Sommething went wrong");
+    }
+}
+
 export const allSpaces = async (req: Request, res: Response) => {
 
     try {
@@ -140,6 +189,95 @@ export const allSpaces = async (req: Request, res: Response) => {
 
     } catch (error) {
         console.log("Error in allSpaces controller: ", error);
+        res.status(500).json("Sommething went wrong");
+    }
+}
+
+export const createElement = async (req: Request, res: Response) => {
+    const parsedData = AddElementSchema.safeParse(req.body);
+    if(!parsedData.success) {
+        return res.status(400).json({
+            message: "Validation error"
+        })
+    }
+
+    try {
+        const space = await prismaClient.space.findUnique({
+            where: {
+                id: parsedData.data.spaceId,
+                createrId: (req as any).userId,
+            }, select: {
+                width: true,
+                height: true
+            }
+        })
+
+        if(!space) {
+            return res.status(400).json({
+                message: "Invalid sapce"
+            })
+        }
+
+        const element = await prismaClient.spaceElement.create({
+            data: {
+                elementId: parsedData.data.elelmentId,
+                spaceId: parsedData.data.spaceId,
+                x: parsedData.data.x,
+                y: parsedData.data.y
+            }
+        })
+        
+        res.status(200).json({
+            message: "Element added",
+        })
+
+    } catch (error) {
+        console.log("Error in createElement controller: ", error);
+        res.status(500).json("Sommething went wrong");
+    }
+}
+
+export const deleteElement = async (req: Request, res: Response) => {
+    const parsedData = DeleteElementSchema.safeParse(req.body);
+    if(!parsedData.success) {
+        return res.status(400).json({
+            message: "Validation error"
+        })
+    }
+
+    try {
+        const element = await prismaClient.spaceElement.findUnique({
+            where: {
+                id: parsedData.data.id,
+            }, select: {
+                space: true
+            }
+        })
+
+        if(!element) {
+            return res.status(403).json({
+                message: "Invalid element"
+            })
+        }
+
+        if(element.space.createrId !== (req as any).userId) {
+            return res.status(403).json({
+                messasge: "Unauthorised"
+            })
+        }
+
+        await prismaClient.spaceElement.delete({
+            where: {
+                id: parsedData.data.id
+            }
+        })
+
+        res.status(200).json({
+            message: "Successfully deleted"
+        })
+
+    } catch (error) {
+        console.log("Error in deleteElement controller: ", error);
         res.status(500).json("Sommething went wrong");
     }
 }
