@@ -11,14 +11,14 @@ indexRouter.post("/signup", signup);
 
 indexRouter.post("/signin", signin);
 
-indexRouter.get("/elements", );
+//indexRouter.get("/elements", );
 
-indexRouter.get("/avatars", );
+//indexRouter.get("/avatars", );
 
 indexRouter.use("/user", userRouter);
 
 indexRouter.use("/space", spaceRouter);
 
-indexRouter.use("/admin", adminRouter);
+//indexRouter.use("/admin", adminRouter);
 
 export default indexRouter;

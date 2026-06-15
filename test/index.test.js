@@ -1,11 +1,12 @@
-import axios from "axios";
+const axios2 = require("axios");
 
-function sum(a, b) {
-  return a + b;
-}
 
 const BACKEND_URL = "http://localhost:3000";
 const WS_URL = "ws://localhost:3001";
+
+const axios = axios2.create({ //to accept all status code
+    validateStatus: () => true,
+})
 
 describe("Authentication", () => {
     test('User is able to sign up only once', async () => {
@@ -18,7 +19,7 @@ describe("Authentication", () => {
             type: "admin"
         })
 
-        expect(response.statusCode).toBe(200);
+        expect(response.status).toBe(201);
 
         const updatedRequest = await axios.post(`${BACKEND_URL}/api/v1/signup`, {
             username,
@@ -26,7 +27,7 @@ describe("Authentication", () => {
             type: "admin"
         })
 
-        expect(updatedRequest.statusCode).toBe(400)
+        expect(updatedRequest.status).toBe(400)
     })
 
     test('Signup request fails if username is empty', async () => {
@@ -38,7 +39,7 @@ describe("Authentication", () => {
             type: "admin" // or user
         })
 
-        expect(response.statusCode).toBe(400);
+        expect(response.status).toBe(400);
     })
 
     test('Signin succeeds if username and password are correct', async () => {
@@ -56,8 +57,8 @@ describe("Authentication", () => {
             password
         })
 
-        expect(response.statusCode).toBe(200);
-        expect(response.body.token).toBeDefined();
+        expect(response.status).toBe(200);
+        expect(response.data.token).toBeDefined();
     })
 
     test('Signin fails if username and password are incorrect', async () => {
@@ -75,7 +76,7 @@ describe("Authentication", () => {
             password
         })
 
-        expect(response.statusCode).toBe(403);
+        expect(response.status).toBe(403);
     })
 })
 

@@ -1,6 +1,5 @@
 import { Request, Response } from "express";
 import { SigninSchema, SignupSchema } from "../validators/index.js";
-import axios from "axios";
 import bcrypt from "bcrypt";
 import { prismaClient } from "@repo/db/client";
 import generateToken from "../utils/generateToken.js";
@@ -68,7 +67,7 @@ export async function signin(req: Request, res: Response) {
         })
 
         if(!user) {
-            return res.status(404).json({
+            return res.status(403).json({
                 message: "User is not registered"
             })
         }
