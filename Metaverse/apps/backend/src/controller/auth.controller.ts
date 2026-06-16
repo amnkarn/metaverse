@@ -81,10 +81,10 @@ export async function signin(req: Request, res: Response) {
         }
 
         //generate token
-        const token = generateToken(user.id, user.role);
+        const token = await generateToken(user.id, user.role);
 
         return res.status(200).json({
-            token,
+            token
         })
 
     } catch (error) {

@@ -6,7 +6,7 @@ import { prismaClient } from "@repo/db/client";
 
 export const updateMetaData = async (req: Request, res: Response) => {
     const parsedData = UpdateMetaDataSchema.safeParse(req.body);
-    if(!parsedData.success) {
+    if (!parsedData.success) {
         return res.send(400).json({
             message: "Validation error"
         })
@@ -15,7 +15,17 @@ export const updateMetaData = async (req: Request, res: Response) => {
     try {
         const userId = (req as any).userId;
 
-        await prismaClient.user.update({
+        const avatar = await prismaClient.avatar.findUnique({
+            where: { id: parsedData.data.avatarId }
+        })
+
+        if(!avatar) {
+            return res.status(400).json({
+                message: "Invalid avatar"
+            })
+        }
+
+        const data = await prismaClient.user.update({
             where: {
                 id: userId
             }, data: {
@@ -23,19 +33,21 @@ export const updateMetaData = async (req: Request, res: Response) => {
             }
         })
 
-        return res.status(200);
-        
+        return res.status(200).json({
+            message: "metadata is updated"
+        });
+
     } catch (error) {
         console.log("Error in updateMetaData conroller: ", error);
-        return res.status(403)
+        return res.status(500).json({ message: "Something went wrong" });
     }
 }
 
 
 export const getBulkMetaData = async (req: Request, res: Response) => {
     const userIdString = (req.query.ids ?? "[]") as string;
-    const userIds = userIdString?.slice(1, userIdString.length - 2).split(",");    
-    console.log(userIds)
+    const userIds = userIdString?.slice(1, userIdString.length - 1).split(",");
+    //console.log(userIds)
 
     try {
         const metaData = await prismaClient.user.findMany({
@@ -50,7 +62,7 @@ export const getBulkMetaData = async (req: Request, res: Response) => {
         })
 
         return res.json({
-            avatar: metaData.map(md => ({
+            avatars: metaData.map(md => ({
                 userId: md.id,
                 avatarId: md.avatar?.imageUrl
             }))

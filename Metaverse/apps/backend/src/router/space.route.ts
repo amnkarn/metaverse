@@ -14,11 +14,11 @@ const spaceRouter: Router = Router();
 
 spaceRouter.post("/", isUser, createSpace)
 
+spaceRouter.get("/all", isUser, allSpaces)
+
 spaceRouter.delete("/:spaceId", isUser, deleteSpace)
 
 spaceRouter.get("/:spaceId", isUser, findSpace)
-
-spaceRouter.get("/all", isUser, allSpaces)
 
 spaceRouter.post("/element", isUser, createSpaceElement)
 

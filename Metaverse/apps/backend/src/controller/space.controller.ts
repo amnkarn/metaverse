@@ -10,14 +10,15 @@ export const createSpace = async (req: Request, res: Response) => {
             message: "Validation error"
         })
     }
+    //console.log(parsedData.data)
 
     try {
         if(!parsedData.data.mapId) {
             const space =  await prismaClient.space.create({
                 data: {
                     name: parsedData.data.name,
-                    width: Number(parsedData.data.dimension.split("x")[0]),
-                    height: Number(parsedData.data.dimension.split("x")[1]),
+                    width: Number(parsedData.data.dimensions.split("x")[0]),
+                    height: Number(parsedData.data.dimensions.split("x")[1]),
                     createrId: (req as any).userId,
                 }
             })
@@ -100,7 +101,11 @@ export const deleteSpace = async (req: Request, res: Response) => {
             })
         }
 
-        if(space.createrId !== (req as any).userID) {
+        //console.log("space creater id: ", space.createrId);
+        //console.log("user id: ", (req as any).userId);
+        //console.log("req reached before delete call");
+
+        if(space.createrId !== (req as any).userId) {
             return res.status(403).json({
                 message: "Unauthorised"
             })
@@ -111,6 +116,7 @@ export const deleteSpace = async (req: Request, res: Response) => {
                 id: spaceId as string,
             }
         })
+        //console.log("req reached after delete call");
 
         res.status(200).json({ message: "space deleted" })
         
@@ -170,7 +176,7 @@ export const findSpace = async (req: Request, res: Response) => {
 }
 
 export const allSpaces = async (req: Request, res: Response) => {
-
+    console.log("req reached to allSpaces controller")
     try {
         const allSpaces = await prismaClient.space.findMany({
             where: {

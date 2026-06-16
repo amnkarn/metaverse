@@ -100,6 +100,7 @@ export const createAvatar = async (req: Request, res: Response) => {
 
 export const createMap = async (req: Request, res: Response) => {
     const parsedData = CreateMapSchema.safeParse(req.body);
+    //console.log(req.body);
     if(!parsedData.success) {
         return res.status(400).json({
             messge: "Validation error"
@@ -110,9 +111,9 @@ export const createMap = async (req: Request, res: Response) => {
         const map = await prismaClient.map.create({
             data: {
                 name: parsedData.data.name,
-                height: Number(parsedData.data.dimension.split("x")[0]),
-                width: Number(parsedData.data.dimension.split("x")[1]),
-                thumbnail: parsedData.data.thubnail,
+                height: Number(parsedData.data.dimensions.split("x")[0]),
+                width: Number(parsedData.data.dimensions.split("x")[1]),
+                thumbnail: parsedData.data.thumbnail,
                 mapElements: {
                     create: parsedData.data.defaultElements.map(e => ({
                         elementsId: e.elementId,
