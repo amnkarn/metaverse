@@ -16,13 +16,13 @@ spaceRouter.post("/", isUser, createSpace)
 
 spaceRouter.get("/all", isUser, allSpaces)
 
-spaceRouter.delete("/:spaceId", isUser, deleteSpace)
-
-spaceRouter.get("/:spaceId", isUser, findSpace)
-
 spaceRouter.post("/element", isUser, createSpaceElement)
 
 spaceRouter.delete("/element", isUser, deleteElement)
+
+spaceRouter.get("/:spaceId", isUser, findSpace)
+
+spaceRouter.delete("/:spaceId", isUser, deleteSpace)
 
 
 export default spaceRouter;

@@ -118,7 +118,7 @@ export const createMap = async (req: Request, res: Response) => {
                     create: parsedData.data.defaultElements.map(e => ({
                         elementsId: e.elementId,
                         x: e.x,
-                        y: e.y     
+                        y: e.y 
                     }))
                 }
             }
