@@ -42,21 +42,25 @@ export const updateElement = async (req: Request, res: Response) => {
     }
 
     try {
+        const elementId = req.params.elementId;
+        if(!elementId) {
+            return res.status(400).json({
+                messagea: "elementId is missing"
+            })
+        }
+
         const element = await prismaClient.element.findUnique({
             where: {
-                id: req.params.elementId as string
+                id: elementId as string
             }
         })
-
         if(!element) {
             return res.status(400).json({ message: "Invalid element id" })
         }
 
-        //if(element)
-
         await prismaClient.element.update({
             where: {
-                id: req.params.elelmentId as string,
+                id: elementId as string,
             }, data: {
                 imageUrl: parsedData.data.imageUrl
             }
