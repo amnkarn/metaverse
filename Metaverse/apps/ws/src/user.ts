@@ -1,9 +1,10 @@
+import "dotenv/config"
 import WebSocket from "ws";
 import { prismaClient } from "@repo/db/client"
 import { RoomManager } from "./RoomManager.js";
 import { OutgoingMessage } from "./types.js";
 import jwt, {JwtPayload} from "jsonwebtoken";
-import "dotenv/config"
+import { JWT_SECRET } from "./config.js";
 
 function getRandomString(length: number) {
     const characters = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
@@ -39,13 +40,19 @@ export class User {
                 case "join":
                     const spaceId = parsedData.payload.spaceId;
                     const token = parsedData.payload.token;
-                    const decodeToken = jwt.verify(token, process.env.JWT_SECRET!) as JwtPayload;
+                    console.log({
+                        "spaceId": spaceId,
+                        "token": token
+                    })
+
+                    const decodeToken = jwt.verify(token, JWT_SECRET) as JwtPayload;
                     const userId = decodeToken.userId;
                     this.userId = userId;
                     if(!userId) {
                         this.ws.close();
                         return;
                     }
+                    console.log("userId is: ", userId);
 
                     const space = await prismaClient.space.findUnique({
                         where: {
@@ -59,7 +66,8 @@ export class User {
                     this.spaceId = spaceId;
                     const room = RoomManager.getInstance();
                     room.addUser(spaceId, this);
-
+                    console.log("user is added in space");
+                    
                     this.x = Math.floor(Math.random() * space.height);
                     this.y = Math.floor(Math.random() * space.width);
 
@@ -86,7 +94,7 @@ export class User {
                             y: this.y
                         }
                     }, this, spaceId)
-
+                    console.log("broadcasted to everyone");
                     break;
 
                 case "move":
@@ -94,19 +102,26 @@ export class User {
                     const moveY = parsedData.payload.y;
                     const xDisplacement = Math.abs(this.x - moveX);
                     const yDisplacement = Math.abs(this.y - moveY);
+                    console.log("move req is reached to server");
+                    console.log({
+                        "moveX": moveX,
+                        "moveY": moveY,
+                    })
 
                     if((xDisplacement === 1 && yDisplacement === 0) || (xDisplacement === 0 && yDisplacement === 1) ) {
                         this.x += xDisplacement;
                         this.y += yDisplacement;
 
                         RoomManager.getInstance().broadcast({
-                            type: "move",
+                            type: "movement",
                             payload: {
                                 x: moveX,
                                 y: moveY,
                                 userId: this.userId
                             }
                         }, this, this.spaceId!)
+                        console.log("move is broadcasted to everyone");
+
                         return;
                     }
 
@@ -117,7 +132,7 @@ export class User {
                             y: this.y,
                         }
                     })
-
+                    console.log("movement rejected becase of invaid move");
                     break;
 
             }
@@ -132,6 +147,7 @@ export class User {
                 userId: this.userId,
             }
         }, this, this.spaceId!)
+        console.log("user left");
     }
 
     send(payload: OutgoingMessage) {
