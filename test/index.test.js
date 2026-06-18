@@ -974,7 +974,7 @@ describe("Websockets test", () => {
         WSSetup();
     })
 
-    test("Get back response for joining the space", () => {
+    test("Get back response for joining the space", async () => {
         //ws1.send(JSON.stringify({
         //    "type": "join",
         //    "payload": {
@@ -1015,7 +1015,7 @@ describe("Websockets test", () => {
         userY = message2.payload.spawn.y;
     })
 
-    //test("User should not be able to move across the boundry of the wall", () => {
+    //test("User should not be able to move across the boundry of the wall", async () => {
     //    ws1.send(JSON.stringify({
     //        "type": "move",
     //        "payload": {
@@ -1031,7 +1031,7 @@ describe("Websockets test", () => {
     //    expect(message.payload.y).toBe(adminY);
     //})
 
-    //test("User should not be able to move two blocks at the same time", () => {
+    //test("User should not be able to move two blocks at the same time", async () => {
     //    ws1.send(JSON.stringify({
     //        "type": "move",
     //        "payload": {
@@ -1047,7 +1047,7 @@ describe("Websockets test", () => {
     //    expect(message.payload.y).toBe(adminY);
     //})
 
-    //test("Correct movement should be broadcasted to the other sockets in the room", () => {
+    //test("Correct movement should be broadcasted to the other sockets in the room", async () => {
     //    ws1.send(JSON.stringify({
     //        "type": "move",
     //        "payload": {
@@ -1064,7 +1064,7 @@ describe("Websockets test", () => {
     //    expect(message.payload.y).toBe(adminY);
     //})
 
-    //test("If a user leaves, other user receives a leave event", () => {
+    //test("If a user leaves, other user receives a leave event", async () => {
     //    ws1.close();
 
     //    const message = await waitForAndPopLatestMessage(ws2Messages);

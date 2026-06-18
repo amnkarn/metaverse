@@ -103,7 +103,8 @@ export class User {
                             type: "move",
                             payload: {
                                 x: moveX,
-                                y: moveY
+                                y: moveY,
+                                userId: this.userId
                             }
                         }, this, this.spaceId!)
                         return;
@@ -123,6 +124,15 @@ export class User {
             }
 
         })
+    }
+
+    destroy() {
+        RoomManager.getInstance().broadcast({
+            type: "user-left",
+            payload: {
+                userId: this.userId,
+            }
+        }, this, this.spaceId!)
     }
 
     send(payload: OutgoingMessage) {
