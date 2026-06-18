@@ -816,7 +816,7 @@ describe("Websockets test", () => {
     let adminY;
 
     function waitForAndPopLatestMessage(messageArray) {
-        return new Promise(r => {
+        return new Promise(resolve => {
             if(messageArray.length > 0) {
                 resolve(messageArray.shift());
             } else {
@@ -832,37 +832,41 @@ describe("Websockets test", () => {
 
     async function HTTPSetup() {
         const username = `amnkarn-${Math.random()}`;
-        const password = "1234";
+        const password = "123456";
 
         //admin signup & signin
         const adminSignupResponse = await axios.post(`${BACKEND_URL}/api/v1/signup`, {
             username,
             password,
-            role: "admin"
+            type: "admin"
         })
-
         const adminSigninResponse = await axios.post(`${BACKEND_URL}/api/v1/signin`, {
             username,
-            password,
+            password
         })
 
-        adminId = adminSignupResponse.data.id;
+        adminId = adminSignupResponse.data.userId;
         adminToken = adminSigninResponse.data.token;
 
-        //user signup & signin
-        const userSignupResponse = await axios.post(`${BACKEND_URL}/api/v1/signup`, {
-            username: username + '-user',
+        //console.log("admin signup response", adminSignupResponse.data);
+        //console.log("admin signin response", adminSigninResponse.data);
+
+        //user signup and signin
+        const userSignup = await axios.post(`${BACKEND_URL}/api/v1/signup`, {
+            username: username + "-user",
             password,
-            role: "user"
+            type: "user"
+        })
+        const userSignin = await axios.post(`${BACKEND_URL}/api/v1/signin`, {
+            username: username + "-user",
+            password
         })
 
-        const userSigninResponse = await axios.post(`${BACKEND_URL}/api/v1/signin`, {
-            username: username + '-user',
-            password,
-        })
+        userId = userSignup.data.userId;
+        userToken = userSignin.data.token;
 
-        userId = userSignupResponse.data.id;
-        userToken = userSigninResponse.data.token;
+        //console.log("user signup response", userSignup.data);
+        //console.log("user signin response", userSignin.data);
 
         //creat element & map
         const element1Response = await axios.post(`${BACKEND_URL}/api/v1/admin/element`, {
@@ -875,7 +879,6 @@ describe("Websockets test", () => {
                 "Authorization": `Bearer ${adminToken}`
             }
         })
-
         const element2Response = await axios.post(`${BACKEND_URL}/api/v1/admin/element`, {
             imageUrl: "https://encrypted-tbn0.gstatic.com/shopping?q=tbn:ANd9GcRCRca3wAR4zjPPTzeIY9rSwbbqB6bB2hVkoTXN4eerXOIkJTG1GpZ9ZqSGYafQPToWy_JTcmV5RHXsAsWQC3tKnMlH_CsibsSZ5oJtbakq&usqp=CAE",
             width: 1,
@@ -889,6 +892,9 @@ describe("Websockets test", () => {
 
         elementId1 = element1Response.data.id;
         elementId2 = element2Response.data.id;
+
+        //console.log("element1 response", elementId1.data);
+        //console.log("element2 response", elementId2.data);
 
         const mapResponse = await axios.post(`${BACKEND_URL}/api/v1/admin/map`, {
             thumbnail: "https://thumbnail.com/a.png",
@@ -914,7 +920,8 @@ describe("Websockets test", () => {
             }
         })
 
-        mapId = mapResponse.id;
+        mapId = mapResponse.data.id;
+        //console.log("map response", mapResponse.data);
 
         const space = await axios.post(`${BACKEND_URL}/api/v1/space`, {
             name: "Test",
@@ -926,14 +933,17 @@ describe("Websockets test", () => {
             }
         })
 
-        spaceId = space.spaceId;
+        spaceId = space.data.spaceId;
+        console.log("space response", space.data);
     }
 
     async function WSSetup() {
-        ws1 = await new WebSocket(WS_URL);
+        ws1 = new WebSocket(WS_URL);
+        console.log("ws1 connected");
         
-        await new Promise ((r) => {
-            ws1.onopen = r
+        await new Promise ((resolve, reject) => {
+            ws1.onopen = resolve;
+            ws1.onerror = reject;
         })
         
         ws1.onmessage = (event) => {
@@ -941,37 +951,31 @@ describe("Websockets test", () => {
         }
         
         
-        ws2 = await new WebSocket(WS_URL);
+        ws2 = new WebSocket(WS_URL);
+        console.log("ws2 connected");
 
-        await new Promise ((r) => {
-            ws2.onopen = r
+        await new Promise ((resolve, reject) => {
+            ws2.onopen = resolve;
+            ws2.onerror = reject;
         })
 
-        
         ws2.onmessage = (event) => {
             ws2Messages.push(JSON.parse(event.data));
         }
-
-        ws1.send(JSON.stringify({
-            "type": "join",
-            "payload": {
-                "spaceId": spaceId,
-                "token": adminToken
-            }
-        }))
-
-        ws2.send(JSON.stringify({
-            "type": "join",
-            "payload": {
-                "spaceId": spaceId,
-                "token": userToken
-            }
-        }))
     }
 
-    beforeAll( async () => {
-        HTTPSetup();
-        WSSetup();
+    beforeAll(async () => {
+        await HTTPSetup();
+        await WSSetup();
+    }, 50000)
+
+    afterAll(() => {
+        if(ws1 && ws1.readyState === WebSocket.OPEN) {
+            ws1.close();
+        }
+        if(ws2 && ws2.readyState === WebSocket.OPEN) {
+            ws2.close();
+        }
     })
 
     test("Get back response for joining the space", async () => {
@@ -990,27 +994,48 @@ describe("Websockets test", () => {
         //        "token": userToken
         //    }
         //}))
+        console.log("req reached to test point 1");
+        ws1.send(JSON.stringify({
+            "type": "join",
+            "payload": {
+                "spaceId": spaceId,
+                "token": adminToken
+            }
+        }))
+        console.log("req reached to test point 2");
 
         const message1 = await waitForAndPopLatestMessage(ws1Messages);
+        expect(message1.type).toBe("space-joined");
+        expect(message1.payload.users.length).toBe(0);
+
+        console.log("req reached to test point 3");
+
+        ws2.send(JSON.stringify({
+            "type": "join",
+            "payload": {
+                "spaceId": spaceId,
+                "token": userToken
+            }
+        }))
+        console.log("req reached to test point 4");
+
         const message2 = await waitForAndPopLatestMessage(ws2Messages);
+        expect(message2.type).toBe("space-joined");
+        expect(message2.payload.users.length).toBe(1);
+
+        console.log("req reached to test point 5");
 
         //message3 will come after joining "ws2" with "user-joined" and with paylaod
         const message3 = await waitForAndPopLatestMessage(ws1Messages);
-    
-        expect(message1.type).toBe("space-joined");
-        expect(message2.type).toBe("space-joined");
-
-        expect(message1.payload.users.length).toBe(0);
-        expect(message2.payload.users.length).toBe(1);
-        
         expect(message3.type).toBe("user-joined");
         expect(message3.payload.x).toBe(message2.payload.spawn.x);
         expect(message3.payload.y).toBe(message2.payload.spawn.y);
         expect(message3.payload.userId).toBe(userId);
 
+        console.log("req reached to test point 6");
+
         adminX = message1.payload.spawn.x;
         adminY = message1.payload.spawn.y;
-    
         userX = message2.payload.spawn.x;
         userY = message2.payload.spawn.y;
     })

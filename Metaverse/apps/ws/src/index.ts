@@ -6,11 +6,7 @@ console.log("ws server is running");
 
 
 wss.on("connection", (ws, req) => {
-    let user: User | undefined;
-    
-    ws.on("message", (data) => {
-        user = new User(ws);
-    })
+    const user = new User(ws);
 
     ws.on("close", () => {
         user?.destroy();

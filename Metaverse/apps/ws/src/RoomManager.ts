@@ -34,7 +34,8 @@ export class RoomManager {
         const room = this.rooms.get(spaceId);
 
         this.rooms.set(spaceId, room!.filter((u) => {
-            u.id !== user.id
+            u.id !== user.id;
+            return;
         }))
     }
 

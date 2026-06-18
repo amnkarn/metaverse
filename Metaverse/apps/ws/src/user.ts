@@ -70,16 +70,16 @@ export class User {
                                 x: this.x,
                                 y: this.y    
                             },
-                            users: room.rooms.get(spaceId)?.map((u) => {
-                                {
+                            users: room.rooms.get(spaceId)
+                                ?.filter((u) => u.id !== this.id)
+                                .map((u) => ({
                                     id: u.id
-                                }
-                            })
+                                }))
                         }
                     })
 
                     room.broadcast({
-                        type: "user-join",
+                        type: "user-joined",
                         payload: {
                             userId: this.userId,
                             x: this.x,
@@ -120,7 +120,6 @@ export class User {
 
                     break;
 
-                default: 
             }
 
         })

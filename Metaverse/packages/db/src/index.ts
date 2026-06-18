@@ -9,7 +9,7 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const envPath = path.resolve(__dirname, "../.env"); //package level .env file
 config({ path: envPath });
 
-const connectionString = process.env.DATABASE_URL;
+const connectionString = process.env.LOCAL_DB;
 if (!connectionString || connectionString === "undefined") {
     throw new Error("connection string is required");
 }
