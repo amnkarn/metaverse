@@ -33,10 +33,7 @@ export class RoomManager {
         
         const room = this.rooms.get(spaceId);
 
-        this.rooms.set(spaceId, room!.filter((u) => {
-            u.id !== user.id;
-            return;
-        }))
+        this.rooms.set(spaceId, room!.filter((u) => u.id !== user.id));
     }
 
     public broadcast(message: OutgoingMessage, user: User, roomId: string) {

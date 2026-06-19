@@ -1,6 +1,6 @@
 const axios2 = require("axios");
 
-const BACKEND_URL = "http://localhost:3000";
+const BACKEND_URL = "http://localhost:8080";
 const WS_URL = "ws://localhost:3001";
 
 const axios = axios2.create({ //to accept all status code

@@ -81,8 +81,10 @@ export class User {
                             users: room.rooms.get(spaceId)
                                 ?.filter((u) => u.id !== this.id)
                                 .map((u) => ({
-                                    id: u.id
-                                }))
+                                    userId: u.userId,
+                                    x: u.x,
+                                    y: u.y
+                                })) ?? []
                         }
                     })
 
@@ -108,9 +110,9 @@ export class User {
                         "moveY": moveY,
                     })
 
-                    if((xDisplacement === 1 && yDisplacement === 0) || (xDisplacement === 0 && yDisplacement === 1) ) {
-                        this.x += xDisplacement;
-                        this.y += yDisplacement;
+                    if ((xDisplacement === 1 && yDisplacement === 0) || (xDisplacement === 0 && yDisplacement === 1)) {
+                        this.x = moveX;
+                        this.y = moveY;
 
                         RoomManager.getInstance().broadcast({
                             type: "movement",
@@ -141,12 +143,18 @@ export class User {
     }
 
     destroy() {
-        RoomManager.getInstance().broadcast({
+        if (!this.spaceId || !this.userId) {
+            return;
+        }
+
+        const room = RoomManager.getInstance();
+        room.removeUser(this, this.spaceId);
+        room.broadcast({
             type: "user-left",
             payload: {
                 userId: this.userId,
             }
-        }, this, this.spaceId!)
+        }, this, this.spaceId);
         console.log("user left");
     }
 

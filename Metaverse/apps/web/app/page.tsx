@@ -1,102 +1,140 @@
-import Image, { type ImageProps } from "next/image";
-import { Button } from "@repo/ui/button";
-import styles from "./page.module.css";
+"use client";
 
-type Props = Omit<ImageProps, "src"> & {
-  srcLight: string;
-  srcDark: string;
-};
+import { useState } from "react";
+import MetaverseArena from "./components/Arena";
 
-const ThemeImage = (props: Props) => {
-  const { srcLight, srcDark, ...rest } = props;
-
-  return (
-    <>
-      <Image {...rest} src={srcLight} className="imgLight" />
-      <Image {...rest} src={srcDark} className="imgDark" />
-    </>
-  );
-};
+const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL ?? "http://localhost:3000";
 
 export default function Home() {
-  return (
-    <div className={styles.page}>
-      <main className={styles.main}>
-        <ThemeImage
-          className={styles.logo}
-          srcLight="turborepo-dark.svg"
-          srcDark="turborepo-light.svg"
-          alt="Turborepo logo"
-          width={180}
-          height={38}
-          priority
-        />
-        <ol>
-          <li>
-            Get started by editing <code>apps/web/app/page.tsx</code>
-          </li>
-          <li>Save and see your changes instantly.</li>
-        </ol>
+  const [username, setUsername] = useState("");
+  const [password, setPassword] = useState("");
+  const [token, setToken] = useState("");
+  const [spaceId, setSpaceId] = useState("");
+  const [joinSpaceId, setJoinSpaceId] = useState("");
+  const [status, setStatus] = useState("");
 
-        <div className={styles.ctas}>
-          <a
-            className={styles.primary}
-            href="https://vercel.com/new/clone?demo-description=Learn+to+implement+a+monorepo+with+a+two+Next.js+sites+that+has+installed+three+local+packages.&demo-image=%2F%2Fimages.ctfassets.net%2Fe5382hct74si%2F4K8ZISWAzJ8X1504ca0zmC%2F0b21a1c6246add355e55816278ef54bc%2FBasic.png&demo-title=Monorepo+with+Turborepo&demo-url=https%3A%2F%2Fexamples-basic-web.vercel.sh%2F&from=templates&project-name=Monorepo+with+Turborepo&repository-name=monorepo-turborepo&repository-url=https%3A%2F%2Fgithub.com%2Fvercel%2Fturborepo%2Ftree%2Fmain%2Fexamples%2Fbasic&root-directory=apps%2Fdocs&skippable-integrations=1&teamSlug=vercel&utm_source=create-turbo"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className={styles.logo}
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={20}
-              height={20}
-            />
-            Deploy now
-          </a>
-          <a
-            href="https://turborepo.dev/docs?utm_source"
-            target="_blank"
-            rel="noopener noreferrer"
-            className={styles.secondary}
-          >
-            Read our docs
-          </a>
-        </div>
-        <Button appName="web" className={styles.secondary}>
-          Open alert
-        </Button>
-      </main>
-      <footer className={styles.footer}>
-        <a
-          href="https://vercel.com/templates?search=turborepo&utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/window.svg"
-            alt="Window icon"
-            width={16}
-            height={16}
+  const handleSignup = async () => {
+    setStatus("Signing up...");
+    const response = await fetch(`${BACKEND_URL}/api/v1/signup`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ username, password, type: "user" })
+    });
+
+    if (!response.ok) {
+      const data = await response.json().catch(() => ({}));
+      setStatus(`Signup failed: ${data.message ?? response.statusText}`);
+      return;
+    }
+
+    setStatus("Registered. You can now sign in.");
+  };
+
+  const handleSignin = async () => {
+    setStatus("Signing in...");
+    const response = await fetch(`${BACKEND_URL}/api/v1/signin`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ username, password })
+    });
+
+    if (!response.ok) {
+      const data = await response.json().catch(() => ({}));
+      setStatus(`Signin failed: ${data.message ?? response.statusText}`);
+      return;
+    }
+
+    const data = await response.json();
+    setToken(data.token);
+    setStatus("Signed in. Create or join a space.");
+  };
+
+  const handleCreateSpace = async () => {
+    if (!token) {
+      setStatus("Sign in first.");
+      return;
+    }
+
+    setStatus("Creating space...");
+    const response = await fetch(`${BACKEND_URL}/api/v1/space`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`
+      },
+      body: JSON.stringify({ name: "Web client room", dimensions: "20x20" })
+    });
+
+    if (!response.ok) {
+      const data = await response.json().catch(() => ({}));
+      setStatus(`Space creation failed: ${data.message ?? response.statusText}`);
+      return;
+    }
+
+    const data = await response.json();
+    setSpaceId(data.spaceId);
+    setStatus("Space created. Connecting to arena...");
+  };
+
+  const handleJoinSpace = () => {
+    if (!joinSpaceId.trim()) {
+      setStatus("Enter a valid space id.");
+      return;
+    }
+    setSpaceId(joinSpaceId.trim());
+    setStatus("Joining existing space...");
+  };
+
+  if (token && spaceId) {
+    return <MetaverseArena spaceId={spaceId} token={token} />;
+  }
+
+  return (
+    <div style={{ padding: 24, maxWidth: 560, margin: "0 auto", fontFamily: "sans-serif", color: "#111" }}>
+      <h1>Metaverse Connect</h1>
+      <p>Sign in or sign up, then create or join a space to connect via websocket.</p>
+
+      <label style={{ display: "block", marginBottom: 8 }}>
+        Username
+        <input
+          style={{ width: "100%", padding: 8, marginTop: 4 }}
+          value={username}
+          onChange={(e) => setUsername(e.target.value)}
+        />
+      </label>
+
+      <label style={{ display: "block", marginBottom: 8 }}>
+        Password
+        <input
+          type="password"
+          style={{ width: "100%", padding: 8, marginTop: 4 }}
+          value={password}
+          onChange={(e) => setPassword(e.target.value)}
+        />
+      </label>
+
+      <div style={{ display: "flex", gap: 12, marginBottom: 24 }}>
+        <button onClick={handleSignin} style={{ padding: "10px 16px" }}>Sign in</button>
+        <button onClick={handleSignup} style={{ padding: "10px 16px" }}>Sign up</button>
+      </div>
+
+      <div style={{ marginBottom: 24 }}>
+        <button onClick={handleCreateSpace} style={{ padding: "10px 16px" }} disabled={!token}>Create new space</button>
+      </div>
+
+      <div style={{ marginBottom: 24 }}>
+        <label style={{ display: "block", marginBottom: 8 }}>
+          Existing space id
+          <input
+            style={{ width: "100%", padding: 8, marginTop: 4 }}
+            value={joinSpaceId}
+            onChange={(e) => setJoinSpaceId(e.target.value)}
           />
-          Examples
-        </a>
-        <a
-          href="https://turborepo.dev?utm_source=create-turbo"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/globe.svg"
-            alt="Globe icon"
-            width={16}
-            height={16}
-          />
-          Go to turborepo.dev →
-        </a>
-      </footer>
+        </label>
+        <button onClick={handleJoinSpace} style={{ padding: "10px 16px" }} disabled={!token}>Join existing space</button>
+      </div>
+
+      <div style={{ marginTop: 16, color: "#444" }}>{status}</div>
     </div>
   );
 }
